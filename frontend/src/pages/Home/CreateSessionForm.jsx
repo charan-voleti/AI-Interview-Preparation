@@ -16,6 +16,7 @@ const CreateSessionForm = () => {
 
   const [isLoading,setIsLoading]=useState(false);
   const [error,setError]=useState(null);
+  const [questions, setQuestions] = useState([]); // <-- store AI-generated questions
 
   const navigate = useNavigate();
 
@@ -39,22 +40,28 @@ const CreateSessionForm = () => {
     setIsLoading(true);
 
     try {
+      // Convert comma-separated topics to array
+      const topicsArray = topicsToFocus.split(',').map(t => t.trim());
+
       // Call AI API to generate questions
       const aiResponse = await axiosInstance.post(
         API_PATHS.AI.GENERATE_QUESTIONS,
         {
           role,
           experience,
-          topicsToFocus,
-          numberOfQuestions: 10, // fixed typo here
+          topicsToFocus: topicsArray,
+          numberOfQuestions: 10,
         }
       );
 
       // Should return an array like [{question, answer}, ...]
       const generatedQuestions = aiResponse.data;
+      setQuestions(generatedQuestions); // store in state if you want to render
 
+      // Create session with generated questions
       const response = await axiosInstance.post(API_PATHS.SESSION.CREATE, {
         ...formData,
+        topicsToFocus: topicsArray,
         questions: generatedQuestions,
       });
 
@@ -123,6 +130,21 @@ const CreateSessionForm = () => {
           Create Session
         </button>
       </form>
+
+      {/* Optional: Display generated AI questions immediately */}
+      {questions.length > 0 && (
+        <div className='mt-5'>
+          <h4 className='text-md font-semibold mb-2'>Generated Questions:</h4>
+          <ul className='flex flex-col gap-3'>
+            {questions.map((q, index) => (
+              <li key={index} className='p-3 border rounded-lg'>
+                <p className='font-medium'>Q{index + 1}: {q.question}</p>
+                <p className='text-sm mt-1 text-gray-700'>Answer: {q.answer}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
