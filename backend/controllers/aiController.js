@@ -1,78 +1,51 @@
-const {GoogleGenAI}=require("@google/genai");
-const {conceptExplainPrompt, questionAnswerPrompt}=require("../utils/prompts");
+const { GoogleGenAI } = require("@google/genai");
+const { conceptExplainPrompt, questionAnswerPrompt } = require("../utils/prompts");
 
-const ai=new GoogleGenAI({apiKey:process.env.GEMINI_API_KEY});
+// Initialize AI
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-//@desc generate interview questions and answers using Gemini
-//@route post /api/ai/generate-questions
-//@access private
-
-const generateInterviewQuestions=async(req,res)=>{
-    try{
-        const {role,experience,topicsToFocus,numberOfQuestions}=req.body;
-        if(!role || !experience || !topicsToFocus || !numberOfQuestions){
-            return res.status(400).json({message:"Missing required fields"});
-        }
-
-        const prompt=questionAnswerPrompt(role,experience,topicsToFocus,numberOfQuestions);
-
-        const response=await ai.models.generateContent({
-            model:"gemini-2.0-flash-lite",
-            contents:prompt,
-        });
-        let rawText=response.text;
-
-        //clean it:Remove '''json and ''' from beginning and end
-        const cleanedText=rawText
-           .replace(/^```json\s*/,"")//remove starting ```json
-           .replace(/```$/,"")//remove ending```
-           .trim(); //remove extra spaces
-
-        //Now safe to parse
-        const data=JSON.parse(cleanedText);
-
-        res.status(200).json(data);
-    }catch(error){
-        res.status(500).json({
-            message:"Failed to generate questions",
-            error:error.message,
-        });
-    }
-}
-
-//@desc generate explains a interview question
-//@route post /api/ai/generate-explanation
+// @desc generate interview questions and answers using Gemini
+// @route post /api/ai/generate-questions
 // @access private
-const generateConceptExplanation = async (req, res) => {
+const generateInterviewQuestions = async (req, res) => {
   try {
-    const { question } = req.body;
-    if (!question) {
+    console.log("=== generateInterviewQuestions called ===");
+    console.log("Request body:", req.body);
+
+    const { role, experience, topicsToFocus, numberOfQuestions } = req.body;
+
+    if (!role || !experience || !topicsToFocus || !numberOfQuestions) {
+      console.warn("Missing required fields");
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const prompt = conceptExplainPrompt(question);
+    const prompt = questionAnswerPrompt(role, experience, topicsToFocus, numberOfQuestions);
+    console.log("Generated prompt:", prompt);
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash-lite",
       contents: prompt,
     });
 
-    let rawText = response.text;
+    console.log("Raw AI response:", response.text);
 
-    // Clean AI response
-    const cleanedText = rawText
+    const cleanedText = response.text
       .replace(/^```json\s*/, "")
       .replace(/```$/, "")
       .trim();
 
-    // Parse JSON safely
+    console.log("Cleaned AI text:", cleanedText);
+
+    // Safe JSON parsing
     let data;
     try {
       data = JSON.parse(cleanedText);
+      console.log("Parsed AI data:", data);
     } catch (err) {
+      console.error("JSON parse error:", err.message);
       return res.status(500).json({
         message: "Failed to parse AI response",
-        rawText,
+        rawText: cleanedText,
         error: err.message,
       });
     }
@@ -80,6 +53,63 @@ const generateConceptExplanation = async (req, res) => {
     res.status(200).json(data);
 
   } catch (error) {
+    console.error("Error generating interview questions:", error);
+    res.status(500).json({
+      message: "Failed to generate questions",
+      error: error.message,
+    });
+  }
+};
+
+// @desc generate explanation for an interview question
+// @route post /api/ai/generate-explanation
+// @access private
+const generateConceptExplanation = async (req, res) => {
+  try {
+    console.log("=== generateConceptExplanation called ===");
+    console.log("Request body:", req.body);
+
+    const { question } = req.body;
+    if (!question) {
+      console.warn("Missing required field: question");
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const prompt = conceptExplainPrompt(question);
+    console.log("Generated prompt for explanation:", prompt);
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-lite",
+      contents: prompt,
+    });
+
+    console.log("Raw AI response:", response.text);
+
+    const cleanedText = response.text
+      .replace(/^```json\s*/, "")
+      .replace(/```$/, "")
+      .trim();
+
+    console.log("Cleaned AI text:", cleanedText);
+
+    // Safe JSON parsing
+    let data;
+    try {
+      data = JSON.parse(cleanedText);
+      console.log("Parsed AI data:", data);
+    } catch (err) {
+      console.error("JSON parse error:", err.message);
+      return res.status(500).json({
+        message: "Failed to parse AI response",
+        rawText: cleanedText,
+        error: err.message,
+      });
+    }
+
+    res.status(200).json(data);
+
+  } catch (error) {
+    console.error("Error generating explanation:", error);
     res.status(500).json({
       message: "Failed to generate explanation",
       error: error.message,
@@ -87,4 +117,4 @@ const generateConceptExplanation = async (req, res) => {
   }
 };
 
-module.exports={generateInterviewQuestions,generateConceptExplanation};
+module.exports = { generateInterviewQuestions, generateConceptExplanation };
