@@ -24,14 +24,18 @@ const CreateSessionForm = () => {
       ...prevData,
       [key]: value,
     }))
+    console.log(`Form data changed: ${key} = ${value}`);
   };
 
   const handleCreateSession = async (e) => {
     e.preventDefault();
     const { role, experience, topicsToFocus } = formData;
 
+    console.log("Form submitted with:", formData);
+
     if (!role || !experience || !topicsToFocus) {
       setError("Please fill all the required fields.");
+      console.warn("Form submission blocked: missing required fields");
       return;
     }
 
@@ -39,36 +43,46 @@ const CreateSessionForm = () => {
     setIsLoading(true);
 
     try {
-      // Call AI API to generate questions
+      console.log("Calling AI API to generate questions...");
       const aiResponse = await axiosInstance.post(
         API_PATHS.AI.GENERATE_QUESTIONS,
         {
           role,
           experience,
           topicsToFocus,
-          numberOfQuestions: 10, // fixed typo here
+          numberOfQuestions: 10,
         }
       );
+      console.log("AI API response:", aiResponse.data);
 
-      // Should return an array like [{question, answer}, ...]
       const generatedQuestions = aiResponse.data;
 
+      console.log("Calling session creation API...");
       const response = await axiosInstance.post(API_PATHS.SESSION.CREATE, {
         ...formData,
         questions: generatedQuestions,
       });
 
+      console.log("Session creation response:", response.data);
+
       if (response.data?.session?._id) {
+        console.log("Navigating to session:", response.data.session._id);
         navigate(`/interview-prep/${response.data.session._id}`);
       }
+
     } catch (err) {
+      console.error("Error in handleCreateSession:", err);
+
       if (err.response?.data?.message) {
         setError(err.response.data.message);
+        console.warn("API error message:", err.response.data.message);
       } else {
         setError("Something went wrong. Please try again.");
       }
+
     } finally {
       setIsLoading(false);
+      console.log("Form submission finished.");
     }
   };
 
@@ -127,4 +141,4 @@ const CreateSessionForm = () => {
   )
 }
 
-export default CreateSessionForm
+export default CreateSessionForm;
