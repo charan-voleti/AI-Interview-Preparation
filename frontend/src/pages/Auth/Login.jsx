@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { validateEmail } from '../../utils/helper';
 import axiosInstance from '../../utils/axiosInstance';
 import { API_PATHS } from '../../utils/apiPaths';
-import Input from '../../components/Inputs/input';
+
 import { UserContext } from '../../context/userContext';
+import Input from '../../components/Inputs/Input'
+
 
 const Login = ({ setCurrentPage }) => {
   const [email, setEmail] = useState("");

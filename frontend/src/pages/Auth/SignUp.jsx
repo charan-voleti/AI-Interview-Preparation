@@ -7,7 +7,10 @@ import { UserContext } from '../../context/userContext';
 import axiosInstance from '../../utils/axiosInstance';
 import { API_PATHS } from '../../utils/apiPaths';
 import uploadImage from '../../utils/uploadImage';
-import Input from '../../components/Inputs/input';
+import Input from '../../components/Inputs/Input'
+
+
+
 
 const SignUp = ({ setCurrentPage }) => {
   const [profilePic, setProfilePic] = useState(null);
