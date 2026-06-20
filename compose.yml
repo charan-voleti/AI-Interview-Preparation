@@ -1,0 +1,31 @@
+version: '3.9'
+services:
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+
+  backend:
+    image: charanvoleti/mern:backend
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/test
+    depends_on:
+      - mongodb
+
+
+
+
+  frontend:
+    image: charanvoleti/mern:frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+volumes:
+  mongo_data:
