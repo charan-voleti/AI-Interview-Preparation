@@ -1,4 +1,4 @@
-export const BASE_URL="http://backend:8000";
+export const BASE_URL="http://16.170.203.130:8000";
 
 export const API_PATHS={
     AUTH:{
